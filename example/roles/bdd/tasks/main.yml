@@ -1,0 +1,63 @@
+- name: TOML is present
+  copy:
+    src=bdd.toml
+    dest=/etc/confd/conf.d/bdd.toml
+  tags: [bdd]
+
+- name: Config template is present
+  copy:
+    src=bdd.conf.tmpl
+    dest=/etc/confd/templates/bdd.conf.tmpl
+  tags: [bdd]
+
+- name: Colors are retrieved
+  blue_green:
+    name: bdd
+    blue_port: 9001
+    green_port: 9002
+  register: colors
+  tags: [bdd]
+
+- debug: var="bdd-{{ colors.new_color }}"
+
+- name: New container process is absent
+  docker:
+    image: "vfarcic/bdd"
+    name: "bdd-{{ colors.new_color }}"
+    state: "absent"
+  tags: [bdd]
+
+- name: New container image is pulled
+  command: docker pull vfarcic/bdd
+
+- name: New container process is running
+  docker:
+    image: "vfarcic/bdd"
+    name: "bdd-{{ colors.new_color }}"
+    state: "running"
+    ports: "{{ colors.new_port }}:9000"
+  tags: [bdd]
+
+- name: Tests are pulled
+  command: docker pull vfarcic/bdd-runner-phantomjs
+  tags: [bdd]
+
+- name: Tests are running
+  command: "docker run -t --rm --name bdd-runner-phantomjs vfarcic/bdd-runner-phantomjs --story_path data/stories/tcbdd/stories/storyEditorForm.story --composites_path /opt/bdd/composites/TcBddComposites.groovy -P url=http://172.17.42.1:{{ colors.new_port }} -P widthHeight=1024,768"
+  tags: [bdd]
+
+- name: Colors are changed
+  blue_green:
+    name: bdd
+    blue_port: 9001
+    green_port: 9002
+    state: changed
+  register: colors
+  tags: [bdd]
+
+- name: Old container process is absent
+  docker:
+    image: "vfarcic/bdd"
+    name: "bdd-{{ colors.old_color }}"
+    state: "absent"
+  tags: [bdd]
