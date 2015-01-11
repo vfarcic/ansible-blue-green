@@ -1,15 +1,3 @@
-- name: TOML is present
-  copy:
-    src=bdd.toml
-    dest=/etc/confd/conf.d/bdd.toml
-  tags: [bdd]
-
-- name: Config template is present
-  copy:
-    src=bdd.conf.tmpl
-    dest=/etc/confd/templates/bdd.conf.tmpl
-  tags: [bdd]
-
 - name: Colors are retrieved
   blue_green:
     name: bdd
@@ -18,7 +6,7 @@
   register: colors
   tags: [bdd]
 
-- debug: var="bdd-{{ colors.new_color }}"
+- debug: var=colors
 
 - name: New container process is absent
   docker:
@@ -45,6 +33,13 @@
 - name: Tests are running
   command: "docker run -t --rm --name bdd-runner-phantomjs vfarcic/bdd-runner-phantomjs --story_path data/stories/tcbdd/stories/storyEditorForm.story --composites_path /opt/bdd/composites/TcBddComposites.groovy -P url=http://172.17.42.1:{{ colors.new_port }} -P widthHeight=1024,768"
   tags: [bdd]
+
+- name: nginx conf is updated
+  template: src=bdd.conf.j2 dest=/etc/nginx/sites-enabled/bdd.conf
+  tags: [bdd]
+
+- name: nginx is restarted
+  command: docker kill -s HUP nginx
 
 - name: Colors are changed
   blue_green:

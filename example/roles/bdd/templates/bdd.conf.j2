@@ -3,6 +3,6 @@ server {
   listen [::]:80 default_server;
   server_name _;
   location / {
-    proxy_pass http://172.17.42.1:{{getv "/bdd/port"}}/;
+    proxy_pass http://172.17.42.1:{{ colors.new_port }}/;
   }
 }
