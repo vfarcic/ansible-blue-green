@@ -1,18 +1,12 @@
 - name: Colors are retrieved
-  blue_green:
-    name: bdd
-    blue_port: 9001
-    green_port: 9002
+  blue_green: name=bdd blue_port=9001 green_port=9002
   register: colors
   tags: [bdd]
 
 - debug: var=colors
 
 - name: New container process is absent
-  docker:
-    image: "vfarcic/bdd"
-    name: "bdd-{{ colors.new_color }}"
-    state: "absent"
+  docker: image="vfarcic/bdd" name="bdd-{{ colors.new_color }}" state="absent"
   tags: [bdd]
 
 - name: New container image is pulled
@@ -20,10 +14,10 @@
 
 - name: New container process is running
   docker:
-    image: "vfarcic/bdd"
-    name: "bdd-{{ colors.new_color }}"
-    state: "running"
-    ports: "{{ colors.new_port }}:9000"
+    image="vfarcic/bdd"
+    name="bdd-{{ colors.new_color }}"
+    state="running"
+    ports="{{ colors.new_port }}:9000"
   tags: [bdd]
 
 - name: Tests are pulled
@@ -42,17 +36,10 @@
   command: docker kill -s HUP nginx
 
 - name: Colors are changed
-  blue_green:
-    name: bdd
-    blue_port: 9001
-    green_port: 9002
-    state: changed
+  blue_green: name=bdd blue_port=9001 green_port=9002 state=changed
   register: colors
   tags: [bdd]
 
 - name: Old container process is absent
-  docker:
-    image: "vfarcic/bdd"
-    name: "bdd-{{ colors.old_color }}"
-    state: "absent"
+  docker: image="vfarcic/bdd" name="bdd-{{ colors.old_color }}" state="absent"
   tags: [bdd]

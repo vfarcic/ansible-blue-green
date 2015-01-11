@@ -8,6 +8,50 @@ import subprocess
 # TODO: Required programs: etcd
 # TODO: Comments and webdocs
 
+DOCUMENTATION = '''
+module: blue_green
+short_description: Retrieves color and port used for blue-green deployment.
+description:
+  - Retrieves and stores current and future colors and ports from/to etcd.
+  - Data retrieved can be used for blue-green deployment with, for example, Docker.
+  - etcd must be installed on the destination.
+version_added: 0.1
+author: Viktor Farcic <viktor@farcic.com>
+options:
+  state:
+    default: retrieved
+    choices: ['retrieved', 'changed']
+    description:
+      - Retrieved returns both current and new colors and ports.
+      - Changed will change current color and port to new ones.
+  name:
+    required: true
+  blue_port:
+    required: true
+  green_port:
+    required: true
+'''
+
+EXAMPLES = '''
+# Retrieve currently running color and ports
+- blue_green: name=bdd blue_port=9001 green_port=9002
+  register: colors
+
+# Deploy the new version of the application container with a different IP
+- docker:
+    image="vfarcic/bdd"
+    name="bdd-{{ colors.new_color }}"
+    state="running"
+    ports="{{ colors.new_port }}:9000"
+
+# Change color and port
+- blue_green: name=bdd blue_port=9001 green_port=9002 state=changed
+  register: colors
+
+# Remove the old container
+- docker: image="vfarcic/bdd" name="bdd-{{ colors.old_color }}" state="absent"
+'''
+
 def etcd_get(module, key):
     (rc, out, err) = module.run_command("etcdctl get /%s/%s" % (module.params['name'], key))
     if not rc in (0, 4):
